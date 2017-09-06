@@ -33,12 +33,15 @@ def BFS(graph, start):
     # print(most)
     #SORT MOST EM [0] e depois em [1]
     
-    def s(t):
+    def sort_nodes(t):
         v = t[1]
         return -v[0], -v[1]
 
     # sorted(d.items(), key=lambda (y,x): (-x[0], -x[1]))
-    return sorted(most.items(), key=s), visited
+    return sorted(most.items(), key=sort_nodes), visited
+
+def sort_forests(f):
+    return -len(f)
 
 real_visited = set()
 real_result = list()
@@ -47,5 +50,9 @@ for node in graph:
     result, visited = BFS(graph, node)
     real_result.append(result)
     real_visited.update(visited)
-print(real_result)
-print(real_visited)
+
+
+print(sorted(real_result, key=sort_forests))
+print([len(a) for a in real_result])
+# print(real_visited)
+
