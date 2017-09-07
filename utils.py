@@ -24,6 +24,14 @@ def import_net(file_name):
 
     return network, all_nodes
 
+def exportGML_net(adjaceny_network, all_nodes, file_out):
+    f = open(file_out,'w')
+    f.write("graph [\n");
+    for node in all_nodes:
+        f.write("node [\n");
+        f.write("id \n" + node);
+        f.write("]\n");
+    f.write("]\n");
 
 def export_net(results, network_name, file_out, first=True):
     """ Export to format required by competition 

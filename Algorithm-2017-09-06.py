@@ -96,18 +96,18 @@ def score(full_bfs, num_nodes):
 # In[ ]:
 
 ### ALTERNATIVE: RUN THIS TO TEST
-network = { 'A': ['B', 'C'],
-            'B': ['A', 'C'],
-            'C': ['B', 'D', 'E' ,'F'],
-            'D': ['E'],
-            'E': ['C'],
-            'F': ['B', 'D'],
-            'G': ['H', 'I','C'],
-            'H': ['G'],
-            'I': ['G', 'J']}
+# network = { 'A': ['B', 'C'],
+#             'B': ['A', 'C'],
+#             'C': ['B', 'D', 'E' ,'F'],
+#             'D': ['E'],
+#             'E': ['C'],
+#             'F': ['B', 'D'],
+#             'G': ['H', 'I','C'],
+#             'H': ['G'],
+#             'I': ['G', 'J']}
 
-all_nodes = ['A', 'B', 'C', 'D', 'E', 
-             'F', 'G', 'H', 'I', 'J']
+# all_nodes = ['A', 'B', 'C', 'D', 'E', 
+#              'F', 'G', 'H', 'I', 'J']
 
 # full_bfs = get_full_bfs(network)
 # pprint(full_bfs)
@@ -118,28 +118,35 @@ all_nodes = ['A', 'B', 'C', 'D', 'E',
 # In[ ]:
 
 ### ON REAL DATA
-first = True
-output = []
-for ftype in ['real','model']:
-    for i in range(1,5):
-        t0 = time()
-        network_name = ftype+str(i)
-        network, all_nodes = import_net(network_name)
-        full_bfs = get_full_bfs(network)
-        results = score(full_bfs, len(all_nodes))
-        output.append((network_name, results))
+# first = True
+# output = []
+# for ftype in ['real','model']:
+#     for i in range(1,5):
+#         t0 = time()
+#         network_name = ftype+str(i)
+#         network, all_nodes = import_net(network_name)
+#         full_bfs = get_full_bfs(network)
+#         results = score(full_bfs, len(all_nodes))
+#         output.append((network_name, results))
         
-        print('Nodes in results: ' + str(len(results)))        
-        print("Run-time (in minutes): " + str(int((time()-t0)/60)))
+#         print('Nodes in results: ' + str(len(results)))        
+#         print("Run-time (in minutes): " + str(int((time()-t0)/60)))
         
-        if first:
-            export_net(results, network_name, 'results-full-v2.csv', first=True)
-            first = False
-        else:
-            export_net(results, network_name, 'results-full-v2.csv', first=False)
-            
+#         if first:
+#             export_net(results, network_name, 'results-full-v2.csv', first=True)
+#             first = False
+#         else:
+#             export_net(results, network_name, 'results-full-v2.csv', first=False)
+# t0 = time()
+# network_name = "model4"
+# network, all_nodes = import_net(network_name)
+# full_bfs = get_full_bfs(network)
+# results = score(full_bfs, len(all_nodes))
+# #output.append((network_name, results))
 
-
+# print('Nodes in results: ' + str(len(results)))        
+# print("Run-time (in minutes): " + str(int((time()-t0)/60)))
+# export_net(results, network_name, 'results-full-v2.csv', first=False)
 # In[ ]:
 
 
