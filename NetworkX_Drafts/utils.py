@@ -27,10 +27,12 @@ def import_net(file_name):
 def exportGML_net(adjaceny_network, all_nodes, file_out):
     f = open(file_out,'w')
     f.write("graph [\n");
+    #INSERIR TODOS OS NOS EM GML
     for node in all_nodes:
         f.write("\tnode [\n");
         f.write("\t\tid " + str(node) + "\n");
         f.write("\t]\n");
+    #INSERIR TODAS AS ARESTAS EM GML
     f.write("]\n");
 
 def export_net(results, network_name, file_out, first=True):
