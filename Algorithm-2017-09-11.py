@@ -109,7 +109,7 @@ all_nodes = ['A', 'B', 'C', 'D', 'E',
 
 ## ON REAL DATA
 first = True
-for ftype in ['real','model']:
+for ftype in ['model']:
 # for ftype in ['real']:
     for i in range(1,5):
         t0 = time()
@@ -121,10 +121,10 @@ for ftype in ['real','model']:
         print("Run-time (in minutes): " + str(int((time()-t0)/60)))
         
         if first:
-            export_net(results, network_name, 'results-full-v4.csv', first=True)
+            export_net(results, network_name, 'results-model.csv', first=True)
             first = False
         else:
-            export_net(results, network_name, 'results-full-v4.csv', first=False)
+            export_net(results, network_name, 'results-model.csv', first=False)
             
 
 

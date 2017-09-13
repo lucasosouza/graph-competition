@@ -59,38 +59,31 @@ def BFS(graph, start):
 def sort_forests(f):
     return -len(f)
 
-def get_full_bfs(network):
+def alg(network, all_nodes):
     """ Run BFS for the entire network """
     
+    num_nodes = len(all_nodes)
+    output = {}
     visited_nodes = set()
-    output = list()
     for node in all_nodes:
         if node not in visited_nodes:
             forest, visited = BFS(network, node)
-            output.append(forest)
             visited_nodes.update(visited)
-            
-    return output
 
-def score(full_bfs, num_nodes):
-    """ Normalize and calculate score for full bfs"""
-    
-    output = {}
-    for forest in full_bfs:
-        forest_size = len(forest)
-        for node in forest:
-            node_id = node[0]
-            num_incoming_nodes = node[1][0]
-            num_outgoing_nodes = node[1][1]
-            score = (num_incoming_nodes+num_outgoing_nodes) * forest_size / num_nodes / 10e6
-            if node_id not in output:
-                output[node_id] = score
-            else:
-                output[node_id] += score
-            forest_size -= 1
-    
-    return sorted(output.items(), key=lambda x:-x[1])
- 
+            # calcular score
+            forest_size = len(forest)
+            for node in forest:
+                node_id = node[0]
+                num_incoming_nodes = node[1][0]
+                num_outgoing_nodes = node[1][1]
+                score = (num_incoming_nodes+num_outgoing_nodes) * forest_size / num_nodes
+                if node_id not in output:
+                    output[node_id] = score
+                else:
+                    output[node_id] += score
+                forest_size -= 1
+            
+    return sorted(output.items(), key=lambda x:-x[1]) 
 
 
 # In[ ]:
@@ -120,23 +113,23 @@ all_nodes = ['A', 'B', 'C', 'D', 'E',
 ### ON REAL DATA
 first = True
 output = []
-for ftype in ['real','model']:
-    for i in range(1,5):
+# for ftype in ['real','model']:
+for ftype in ['real']:
+    for i in range(1,2):
         t0 = time()
         network_name = ftype+str(i)
         network, all_nodes = import_net(network_name)
-        full_bfs = get_full_bfs(network)
-        results = score(full_bfs, len(all_nodes))
+        results = alg(network, all_nodes)
         output.append((network_name, results))
         
         print('Nodes in results: ' + str(len(results)))        
         print("Run-time (in minutes): " + str(int((time()-t0)/60)))
         
         if first:
-            export_net(results, network_name, 'results-full-v2.csv', first=True)
+            export_net(results, network_name, 'results-full-v4.csv', first=True)
             first = False
         else:
-            export_net(results, network_name, 'results-full-v2.csv', first=False)
+            export_net(results, network_name, 'results-full-v4.csv', first=False)
             
 
 

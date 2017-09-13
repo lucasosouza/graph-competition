@@ -10,19 +10,17 @@ def import_net(file_name):
     # create adjacency list
     network = {}
     for row in mt:
-        source = row[0]
-        target = row[1]
-        if source not in network:
-            network[source] = set()
-        network[source].add(target)
+        node1 = row[0]
+        node2 = row[1]
+        if node1 not in network:
+            network[node1] = set()
+        if node2 not in network:
+            network[node2] = set()
+        network[node1].add(node2)
+        network[node2].add(node1)
         
-    print("Nodes with outgoing edges: ", len(network))
-
-    # create set of nods, including nodes without outgoing edges
-    all_nodes = set(mt.flatten())
-    print("All nodes: ", len(all_nodes))
-
-    return network, all_nodes
+    print("All nodes: ", len(network))
+    return network
 
 
 def export_net(results, network_name, file_out, first=True):
