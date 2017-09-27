@@ -31,12 +31,6 @@ class Graph:
                 max_node = max(max_node, node1, node2)
 
         self.V = max_node+1
-
-        # define a list to keep nodes ordering
-        self.order = 1
-        self.nodes_ordering = [0] * self.V
-
-        assert (self.V == len(self.graph.keys())), "Número de nós correto"
         print ("Adicionado todas as arestas ao grafo")
 
     def create_sparse_graph(self):
@@ -132,14 +126,10 @@ class Graph:
     def find_clusters(self):
         """ Connected components without using sets """
 
-        # update a table telling in which cluster each node is
-        self.nodes_cluster = [0] * (self.V)
-
         # reset clusters
         self.clusters = []
         not_visited = np.ones(self.V)        
         # loop through all vertices
-        idx_cluster = 0
         for start_node in range(self.V):
             # if still not visited
             if not_visited[start_node] == 1:
@@ -149,9 +139,6 @@ class Graph:
                 cc = [start_node]
                 # init queue
                 queue = [start_node]
-                # update position
-                self.nodes_cluster[start_node] = idx_cluster
-                # iterate
                 while len(queue) > 0:
                     node1 = queue.pop(0)
                     for node2 in self.sparse_graph[node1]:
@@ -162,136 +149,64 @@ class Graph:
                             cc.append(node2)
                             # append to queue
                             queue.append(node2)
-                            # update position
-                            self.nodes_cluster[node2] = idx_cluster
                 # print("Length of cluster: {}".format(len(cc))) 
-                idx_cluster += 1
                 self.clusters.append(cc)
 
     def pre_clusters_size(self):
         """ Populate array with cluster sizes
         Speed up bridge score implementation """
 
-        num_clusters = len(self.clusters)
-
         # populate array with cluster sizes
-        self.cluster_size = [0] * (num_clusters)
-        for idx, cluster in enumerate(self.clusters):
-            self.cluster_size[idx] = len(cluster)
-
-        self.cluster_bridges = []
-        for _ in range(num_clusters):
-            self.cluster_bridges.append([])
-
-        # find the cluster for each node
-        for node1, node2 in self.bridges:
-
-            node1_cluster = self.nodes_cluster[node1]
-            node2_cluster = self.nodes_cluster[node2]
-
-            # appends - origin node and which cluster it conects
-            self.cluster_bridges[node1_cluster].append((node1, node2_cluster))
-            self.cluster_bridges[node2_cluster].append((node2, node1_cluster))
-
+        self.cluster_size = list(range(self.V))
+        for cluster in self.clusters:
+            len_cluster = len(cluster)
+            for node in cluster:
+                self.cluster_size[node] = len_cluster
 
     def score_bridges(self, base_score=0.5):
         """  Calculate score for bridges"""
 
-        # divided by 1e4 took 40 seconds
-        # divided by 1e3 should take 400 seconds, or about 7 minutes
-        for i in range(int(len(self.bridges)/1e3)):
+        scores = defaultdict(int)
+        self.score_bridges = [base_score] * self.V
+        for node1, node2 in self.bridges:
+            size1 = self.cluster_size[node1]
+            size2 = self.cluster_size[node2]
+            # using harmonic average
+            score = (size1*size2)/(size1+size2)
+            if size1 >= size2:
+                scores[node1] += score
+            else: 
+                scores[node2] += score
 
-            # get largest cluster
-            largest_cluster = np.argmax(self.cluster_size)
+        if len(scores) > 0:
+            max_score = max([x[1] for x in scores.items()])
+            min_score = min([x[1] for x in scores.items()])
+            den = max_score - min_score
 
-            # find the most significant bridge
-            max_size = 0
-            most_significant_bridge = None
-
-            # early stopping, when largest node has no more bridges
-            if len(self.cluster_bridges[largest_cluster]) == 0:
-                break
-
-            for idx, bridge in enumerate(self.cluster_bridges[largest_cluster]):
-                origin_node, target_cluster = bridge
-                target_cluster_size = self.cluster_size[target_cluster]
-                if target_cluster_size > max_size:
-                    max_size = target_cluster_size
-                    most_significant_bridge = idx
-
-            # remove bridge from cluster list
-            selected_bridge = self.cluster_bridges[largest_cluster].pop(most_significant_bridge)
-            selected_node, selected_target_cluster = selected_bridge
-
-            # add the origin node to list
-            if self.nodes_ordering[selected_node] == 0:
-                self.nodes_ordering[selected_node] = self.order
-                self.order += 1
-
-            # update size of the bridge
-            new_size = max(0, self.cluster_size[largest_cluster] - (1+self.cluster_size[selected_target_cluster]))
-            self.cluster_size[largest_cluster] = new_size
-
-            # iterate
+            for node, score in scores.items():
+                normalized_score = (score - min_score)/den
+                self.score_bridges[node] += normalized_score
 
     def score_remaining(self, base_score=0.5):
         """  Calculate score for remaining nodes """
 
-        node_cluster_size = [0] * self.V
+        # calculate variables
+        X = map(lambda x:[x[0], list(x[1])], list(self.graph.items()))
+        X = map(lambda x:[x[0], len(x[1]), np.std((x[1]))], X)
+        X = np.array(list(X))
 
-        for idx, cluster in enumerate(self.clusters):
-            len_cluster = self.cluster_size[idx]
-            for node in cluster:
-                node_cluster_size[node] = len_cluster
-                # check if node is not already classified
-                if self.nodes_ordering[node] == 0:
-                    len_cluster -= 1
+        # mean of stds
+        max_std = np.max(X[:,2])
+        min_std = np.min(X[:, 2])
+        den = max_std - min_std
 
-        connections = [len(k[1]) for k in self.graph.items()]
-        final = list(zip(list(range(self.V)), connections, node_cluster_size))
-        remaining_nodes = sorted(final, key=lambda x:(-x[2], -x[1]))
-        # remaining_nodes = sorted(final, key=lambda x:(-x[1], -x[2]))
-        for node, connections, cluster_size in remaining_nodes:
-            if self.nodes_ordering[node] == 0:
-                self.nodes_ordering[node] = self.order
-                self.order += 1
+        # apply score
+        X = map(lambda x:[x[0], x[1], x[2], (x[2]-min_std)/den], X)
+        X = map(lambda x:(int(x[0]), x[1]*(base_score+x[3])*(self.score_bridges[int(x[0])])), X)
+        X = list(X)
+        
+        self.scored_nodes = sorted(X, key=lambda x:-x[1])
 
     def export(self):
-
-        to_export = zip(range(self.V), self.nodes_ordering)
-        to_export = sorted(list(to_export), key=lambda x:x[1])
-
-        return to_export
-
-
-   # def score_remaining(self, base_score=0.5):
-   #      """  Calculate score for remaining nodes """
-
-   #      # while there are unordered clusters
-   #      while min(self.nodes_ordering) == 0:
-
-   #          # get largest clusters            
-   #          largest_cluster = np.argmax(self.cluster_size)
-   #          second_largest_cluster = \
-   #              np.argmax(self.cluster_size[0:largest_cluster] + self.cluster_size[largest_cluster+1:])
-   #          if second_largest_cluster >= largest_cluster:
-   #              second_largest_cluster += 1
-
-   #          diff = self.cluster_size[largest_cluster] - self.cluster_size[second_largest_cluster]
-
-   #          # early stopping
-   #          if diff < 1e6:
-   #              break
-
-   #          nodes_connections = \
-   #              [(node, len(self.graph[node])) for node in self.clusters[largest_cluster]]
-   #          nodes_connections = sorted(nodes_connections, key=lambda x:-x[1])
-
-   #          for i in range(diff):
-   #              # append node to ordered list
-   #              if self.nodes_ordering[selected_node] == 0:
-   #                  self.nodes_ordering[nodes_connections[i][0]] = self.order
-   #                  self.order += 1
-
-   #              # reduce size of cluster
-   #              self.cluster_size[largest_cluster] -= 1
+        print(len(self.scored_nodes))
+        return self.scored_nodes
