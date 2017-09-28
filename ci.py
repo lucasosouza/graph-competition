@@ -7,6 +7,8 @@ from time import time
 from node import Node
 from heap import Heap
 
+import pickle
+
 class Graph:  
     """ Represents an undirected graph using adjacency list representation """
 
@@ -89,8 +91,6 @@ class Graph:
 
     def remove_largest_value(self):
         node = self.heap.heap_extract_max()
-        if not node:
-            import pdb;pdb.set_trace()
         node.kill()
 
         return node
@@ -125,35 +125,40 @@ class Graph:
     def run(self):
         self.compute_ci(self.graph)
         self.create_max_heap()
-        # counter = self.V-1
         i = 0
+        stop_condition = int(self.V*0.99)
         while True:
-            if i > int(self.V*0.1):
+            if i > stop_condition:
                 break
             center_node = self.remove_largest_value()
             self.priority_list[center_node.index] = self.priority
             self.update_ci_values(center_node)
-            # counter -= 1
             i +=1 
             self.priority += 1
             # print("Remaining iterations: {}".format(counter))
+
         print("Finished running")
 
     def score_remaining(self, base_score=0.5):
         """  Calculate score for remaining nodes """
 
-        X = [(node.index, node.degree) for node in self.graph]
+        X = [(node.index, node.ci) for node in self.graph]
         X = sorted(X, key=lambda x:-x[1])
         for node, _ in X:
-            if priority_list[node] == -1:
-                priority_list[node] = self.priority
+            if self.priority_list[node] == -1:
+                self.priority_list[node] = self.priority
                 self.priority += 1
 
 
     def export(self):
 
-        to_export = zip(range(self.V), self.priority_list)
+        self.score_remaining()
+        to_export = []
+        for idx, priority in enumerate(self.priority_list):
+            to_export.append((idx, priority, self.graph[idx].ci))
+
         to_export = sorted(list(to_export), key=lambda x:x[1])
+
         return to_export
 
 # g = Graph(9, dist=0)
@@ -174,19 +179,30 @@ class Graph:
 # g.addEdge(3,7)
 # g.addEdge(3,4)
 # g.addEdge(4,7)
+# network_name = 'real5'
 
+# print(g.V)
 # g.run()
-# print(g.priority_list)
-# for node in g.graph:
-#    print(node)
 # print(g.export())
 
+# define file in and file out
 network_name = 'real2'
 file_out = "ci_{}.csv".format(network_name)
+
+# load graph
 g = Graph(filename=network_name)
 t0 = time()
 g.run()
 print("Running time is {}".format(time()-t0))
 
+# run
+res = g.export()
+print(res)
+
+# save full file as pickle
+with open('{}.p'.format(network_name), 'wb') as f:
+    pickle.dump(res, f)
+
+# export in contest format
 export_net(g.export(), network_name, file_out, first=True)
 
