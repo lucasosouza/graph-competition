@@ -1,6 +1,6 @@
 import numpy as np
 from time import time
-from utils import import_net
+from utils import export_net
 
 from collections import defaultdict
 from time import time
@@ -27,9 +27,9 @@ class Graph:
 
     def compute_ci(self, nodes):
         for node in nodes:
-            print("Running ci for node {}".format(node.index))
             if node.ci < 0:
                 node.ci = self.compute_ci_node(node.index, self.dist)
+        print("Finished calculating ci")
 
     def compute_ci_node(self, start_node, dist):
         ci = 0
@@ -125,19 +125,19 @@ class Graph:
     def run(self):
         self.compute_ci(self.graph)
         self.create_max_heap()
-        counter = self.V-1
+        # counter = self.V-1
         i = 0
         while True:
-            # if i > int(np.sqrt(self.V)):
-            if i > self.V-1:
+            if i > int(self.V*0.1):
                 break
             center_node = self.remove_largest_value()
             self.priority_list[center_node.index] = self.priority
             self.update_ci_values(center_node)
-            counter -= 1
+            # counter -= 1
             i +=1 
             self.priority += 1
-            print("Remaining iterations: {}".format(counter))
+            # print("Remaining iterations: {}".format(counter))
+        print("Finished running")
 
     def score_remaining(self, base_score=0.5):
         """  Calculate score for remaining nodes """
@@ -156,34 +156,37 @@ class Graph:
         to_export = sorted(list(to_export), key=lambda x:x[1])
         return to_export
 
-g = Graph(9, dist=0)
-g.addEdge(0,1)
-g.addEdge(0,2)
-g.addEdge(1,2)
-g.addEdge(1,5)
-g.addEdge(2,3)
-g.addEdge(2,4)
-g.addEdge(2,6)
-g.addEdge(2,5)
-g.addEdge(5,6)
-g.addEdge(5,8)
-g.addEdge(6,8)
-g.addEdge(6,7)
-g.addEdge(6,4)
-g.addEdge(6,3)
-g.addEdge(3,7)
-g.addEdge(3,4)
-g.addEdge(4,7)
+# g = Graph(9, dist=0)
+# g.addEdge(0,1)
+# g.addEdge(0,2)
+# g.addEdge(1,2)
+# g.addEdge(1,5)
+# g.addEdge(2,3)
+# g.addEdge(2,4)
+# g.addEdge(2,6)
+# g.addEdge(2,5)
+# g.addEdge(5,6)
+# g.addEdge(5,8)
+# g.addEdge(6,8)
+# g.addEdge(6,7)
+# g.addEdge(6,4)
+# g.addEdge(6,3)
+# g.addEdge(3,7)
+# g.addEdge(3,4)
+# g.addEdge(4,7)
 
-g.run()
+# g.run()
 # print(g.priority_list)
 # for node in g.graph:
 #    print(node)
-print(g.export())
+# print(g.export())
 
-# g = Graph(filename='real5')
-# t0 = time()
-# g.run()
-# print("Running time is {}".format(time()-t0))
-# import pdb;pdb.set_trace()
+network_name = 'real2'
+file_out = "ci_{}.csv".format(network_name)
+g = Graph(filename=network_name)
+t0 = time()
+g.run()
+print("Running time is {}".format(time()-t0))
+
+export_net(g.export(), network_name, file_out, first=True)
 
