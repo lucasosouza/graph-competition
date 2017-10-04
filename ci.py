@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from time import time
 from utils import export_net
 
@@ -29,14 +30,80 @@ class Graph:
 
     def compute_ci(self, nodes):
         for node in nodes:
-            if node.ci < 0:
-                node.ci = self.compute_ci_node(node.index, self.dist)
-        print("Finished calculating ci")
+            if(TYPE):
+                node.ci = self.compute_ci_node(node.index, self.dist-1)
+            else:
+                node.ci = self.compute_ci_node_v2(node.index, self.dist)
+        if(DEBUG):
+            print("CI PARA LISTA REQUERIDA CALCULADO")
+
+    def compute_ci_node_v2(self, start_node, dist):
+        ci = 0
+        level = 0
+        visited = [0]*self.V
+        visited[start_node] = 1
+        queue = [start_node]
+        queue.append(None)
+        bola = []
+        bola_idx = []
+        if(DEBUG):
+            print("START BFS: {}".format(start_node))
+        for i in range(0,dist):
+            bola.append([])
+            bola_idx.append([])
+        e_border = []
+        e_border_idx = []
+        while len(queue) != 0:
+            node = queue.pop(0)
+            if(DEBUG):
+                print("node: {}, level: {}".format(node, level))
+                print(visited)
+            if(node == None):
+                level+=1
+                if(level==dist+1):
+                    if(DEBUG):
+                        print("Chegou ao nivel requerido")
+                    break
+                queue.append(None)
+                if(queue[0] == None):
+                    break
+                else:
+                    continue
+            for adj_node in self.graph[node].neighbors:
+                idx_adj_node = adj_node.index
+                if not visited[idx_adj_node]:
+                    visited[idx_adj_node] = 1
+                    queue.append(idx_adj_node)
+                    if level!=dist:
+                        bola[level].append(adj_node)
+                        bola_idx[level].append(idx_adj_node) #LUCAS VE ISSO AQUI
+                    else:
+                        e_border.append(adj_node)
+                        e_border_idx.append(idx_adj_node)
+        # ci = (self.graph[start_node].degree - 1)*(sum(x[1] for x in bola[-1]) - len(bola[-1]))
+        indice = len(bola) -1
+        soma = 0
+        for camada in reversed(bola):
+            if len(camada)!=0:
+                soma = (sum(node.degree for node in bola[indice]) - len(bola[indice]))
+                break
+            indice-=1
+        ci = (self.graph[start_node].degree - 1)*soma
+        self.graph[start_node].bola = bola
+        self.graph[start_node].e_border = e_border
+        if(DEBUG):
+            flat_list = [item for sublist in bola for item in sublist]
+            print("BOLA: {}".format(bola_idx))
+            index_list = [node.index for node in e_border]
+            print("E_BORDER: {}".format(e_border_idx))
+            print("CI de {}: {}".format(start_node,ci))
+            input()
+        return ci
 
     def compute_ci_node(self, start_node, dist):
         ci = 0
         visited = [0] * self.V
-        visited[start_node] = 1 
+        visited[start_node] = 1
         deg = 0
         counters = [0] * (dist+2+1)
         edges = [0] * (dist+2+1)
@@ -80,9 +147,21 @@ class Graph:
 
     def update_ci_values(self, center_node):
         decrease_amnt = center_node.degree - 1
-        for node in center_node.border:
-            node.ci -= decrease_amnt
-        self.compute_ci(center_node.bubble)
+        if(TYPE):
+            for node in center_node.border:
+                node.ci -=  decrease_amnt
+            flat_list = center_node.bubble
+        else:
+            for node in center_node.e_border:
+                node.ci -= decrease_amnt
+            flat_list = [item for sublist in center_node.bola for item in sublist]
+            index_list = [node.index for node in flat_list]
+        if(DEBUG):
+            print("CENTER NODE: {}".format(center_node.index))
+            print("BOLA PRECISA SER RECALCULADA")
+            print(index_list)
+            input()
+        self.compute_ci(flat_list)
 
     def create_max_heap(self):
         # heap index starts at 1
@@ -137,7 +216,7 @@ class Graph:
             self.priority += 1
             # print("Remaining iterations: {}".format(counter))
 
-        print("Finished running")
+        print("TERMINOU A EXECUÇÃO")
 
     def score_remaining(self, base_score=0.5):
         """  Calculate score for remaining nodes """
@@ -161,48 +240,75 @@ class Graph:
 
         return to_export
 
-# g = Graph(9, dist=0)
-# g.addEdge(0,1)
-# g.addEdge(0,2)
-# g.addEdge(1,2)
-# g.addEdge(1,5)
-# g.addEdge(2,3)
-# g.addEdge(2,4)
-# g.addEdge(2,6)
-# g.addEdge(2,5)
-# g.addEdge(5,6)
-# g.addEdge(5,8)
-# g.addEdge(6,8)
-# g.addEdge(6,7)
-# g.addEdge(6,4)
-# g.addEdge(6,3)
-# g.addEdge(3,7)
-# g.addEdge(3,4)
-# g.addEdge(4,7)
-# network_name = 'real5'
+global DEBUG
+global TYPE
+if __name__ == "__main__":
+    DEBUG = 0
+    TYPE = 0
+    for arg in sys.argv:
+        if arg == "--debug":
+            DEBUG = 1
+        if arg == "--og":
+            TYPE = 1
+    print("GRAFO EXEMPLO K-CORE")
+    g = Graph(9, dist=1)
+    print("LARGURA BOLA: {}".format(g.dist))
+    g.addEdge(0,1)
+    g.addEdge(0,2)
+    g.addEdge(1,2)
+    g.addEdge(1,5)
+    g.addEdge(2,3)
+    g.addEdge(2,4)
+    g.addEdge(2,6)
+    g.addEdge(2,5)
+    g.addEdge(5,6)
+    g.addEdge(5,8)
+    g.addEdge(6,8)
+    g.addEdge(6,7)
+    g.addEdge(6,4)
+    g.addEdge(6,3)
+    g.addEdge(3,7)
+    g.addEdge(3,4)
+    g.addEdge(4,7)
 
-# print(g.V)
-# g.run()
-# print(g.export())
+    # print("GRAFO2 EXEMPLO 3-CORE")
+    # g = Graph(5, dist = 1)
+    # g.addEdge(0,1)
+    # g.addEdge(0,2)
+    # g.addEdge(0,3)
+    # g.addEdge(0,4)
+    # g.addEdge(1,2)
+    # g.addEdge(1,4)
+    # g.addEdge(2,3)
+    # g.addEdge(2,4)
+    # g.addEdge(3,4)
+    # network_name = 'real5'
 
-# define file in and file out
-network_name = 'real2'
-file_out = "ci_{}.csv".format(network_name)
+    print(g.V)
+    g.run()
+    _graph = sorted(g.graph, key=lambda x:-x.ci)
+    for node in _graph:
+        print(node)
+    # print(g.export())
 
-# load graph
-g = Graph(filename=network_name)
-t0 = time()
-g.run()
-print("Running time is {}".format(time()-t0))
+    # # define file in and file out
+    # network_name = 'real2'
+    # file_out = "ci_{}.csv".format(network_name)
 
-# run
-res = g.export()
-print(res)
+    # # load graph
+    # g = Graph(filename=network_name)
+    # t0 = time()
+    # g.run()
+    # print("Running time is {}".format(time()-t0))
 
-# save full file as pickle
-with open('{}.p'.format(network_name), 'wb') as f:
-    pickle.dump(res, f)
+    # # run
+    # res = g.export()
+    # print(res)
 
-# export in contest format
-export_net(g.export(), network_name, file_out, first=True)
+    # # save full file as pickle
+    # with open('{}.p'.format(network_name), 'wb') as f:
+    #     pickle.dump(res, f)
+
+    # # export in contest format
+    # export_net(g.export(), network_name, file_out, first=True)
 

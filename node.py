@@ -2,6 +2,9 @@ class Node:
     def __init__(self, index):
         self.index = index
         self.ci = -1
+        self.bola_nodes = list()
+        self.bola = list()
+        self.e_border = list()
         self.bubble = list()
         self.border = list()
         self.degree = 0
@@ -18,4 +21,11 @@ class Node:
             adj_node.neighbors.remove(self)
 
     def __str__(self):
-        return "{}, {}, {}, {}".format(self.index, self.ci, self.bubble, self.border)
+        _bubble = list()
+        _border = list()
+        flat_list = [item for sublist in self.bola for item in sublist]
+        for node in flat_list:
+            _bubble.append(node.index)
+        for node in self.e_border:
+            _border.append(node.index)
+        return "{}, {}, {}, {}".format(self.index, self.ci, _bubble, _border)
