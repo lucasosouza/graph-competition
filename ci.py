@@ -205,7 +205,7 @@ class Graph:
         self.compute_ci(self.graph)
         self.create_max_heap()
         i = 0
-        stop_condition = int(self.V*0.99)
+        stop_condition = int(self.V*1)
         while True:
             if i > stop_condition:
                 break
@@ -250,26 +250,26 @@ if __name__ == "__main__":
             DEBUG = 1
         if arg == "--og":
             TYPE = 1
-    print("GRAFO EXEMPLO K-CORE")
-    g = Graph(9, dist=1)
-    print("LARGURA BOLA: {}".format(g.dist))
-    g.addEdge(0,1)
-    g.addEdge(0,2)
-    g.addEdge(1,2)
-    g.addEdge(1,5)
-    g.addEdge(2,3)
-    g.addEdge(2,4)
-    g.addEdge(2,6)
-    g.addEdge(2,5)
-    g.addEdge(5,6)
-    g.addEdge(5,8)
-    g.addEdge(6,8)
-    g.addEdge(6,7)
-    g.addEdge(6,4)
-    g.addEdge(6,3)
-    g.addEdge(3,7)
-    g.addEdge(3,4)
-    g.addEdge(4,7)
+    # print("GRAFO EXEMPLO K-CORE")
+    # g = Graph(9, dist=1)
+    # print("LARGURA BOLA: {}".format(g.dist))
+    # g.addEdge(0,1)
+    # g.addEdge(0,2)
+    # g.addEdge(1,2)
+    # g.addEdge(1,5)
+    # g.addEdge(2,3)
+    # g.addEdge(2,4)
+    # g.addEdge(2,6)
+    # g.addEdge(2,5)
+    # g.addEdge(5,6)
+    # g.addEdge(5,8)
+    # g.addEdge(6,8)
+    # g.addEdge(6,7)
+    # g.addEdge(6,4)
+    # g.addEdge(6,3)
+    # g.addEdge(3,7)
+    # g.addEdge(3,4)
+    # g.addEdge(4,7)
 
     # print("GRAFO2 EXEMPLO 3-CORE")
     # g = Graph(5, dist = 1)
@@ -284,31 +284,31 @@ if __name__ == "__main__":
     # g.addEdge(3,4)
     # network_name = 'real5'
 
-    print(g.V)
-    g.run()
-    _graph = sorted(g.graph, key=lambda x:-x.ci)
-    for node in _graph:
-        print(node)
+    # print(g.V)
+    # g.run()
+    # _graph = sorted(g.graph, key=lambda x:-x.ci)
+    # for node in _graph:
+    #     print(node)
     # print(g.export())
 
-    # # define file in and file out
-    # network_name = 'real2'
-    # file_out = "ci_{}.csv".format(network_name)
+    # define file in and file out
+    network_name = 'real2'
+    file_out = "ci_{}.csv".format(network_name)
 
-    # # load graph
-    # g = Graph(filename=network_name)
-    # t0 = time()
-    # g.run()
-    # print("Running time is {}".format(time()-t0))
+    # load graph
+    g = Graph(filename=network_name)
+    t0 = time()
+    g.run()
+    print("Running time is {}".format(time()-t0))
 
-    # # run
-    # res = g.export()
-    # print(res)
+    # run
+    res = g.export()
+    print(res)
 
-    # # save full file as pickle
-    # with open('{}.p'.format(network_name), 'wb') as f:
-    #     pickle.dump(res, f)
+    # save full file as pickle
+    with open('{}.p'.format(network_name), 'wb') as f:
+        pickle.dump(res, f)
 
-    # # export in contest format
-    # export_net(g.export(), network_name, file_out, first=True)
+    # export in contest format
+    export_net(g.export(), network_name, file_out, first=True)
 
