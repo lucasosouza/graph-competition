@@ -43,7 +43,7 @@ def export_net(results, network_name, file_out, first=True):
     # write each row
     counter = 1
     for tup in results:
-        node = tup[0]
+        node = tup.index
         if counter == 1:
             # add column header when counter is 1
             f.write(network_name + ',')

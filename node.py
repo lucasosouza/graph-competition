@@ -19,6 +19,7 @@ class Node:
         self.is_active = False
         for adj_node in self.neighbors:
             adj_node.neighbors.remove(self)
+            adj_node.degree -= 1
 
     def __str__(self):
         _bubble = list()
@@ -28,4 +29,4 @@ class Node:
             _bubble.append(node.index)
         for node in self.e_border:
             _border.append(node.index)
-        return "{}, {}, {}, {}".format(self.index, self.ci, _bubble, _border)
+        return "({}, {})".format(self.index, self.ci)
