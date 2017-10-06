@@ -28,7 +28,7 @@ def export_net(results, network_name, file_out, first=True):
         Required: optimize/clean last if, redundancy """
 
     if first:
-        f = open(file_out, 'w')
+        f = open("./Results/" + file_out, 'w')
 
         # write headers
         f.write('NetID,')
