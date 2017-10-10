@@ -36,10 +36,11 @@ class Graph:
             if VERBOSE:
                 if not index%mod:
                     print("{}/{}".format(index,tot))
-            if TYPE:
-                node.ci = self.compute_ci_node(node.index, self.dist-1)
-            else:
-                node.ci = self.compute_ci_node_v2(node.index, self.dist)
+            # if TYPE:
+            #     node.ci = self.compute_ci_node(node.index, self.dist-1)
+            # else:
+            #     node.ci = self.compute_ci_node_v2(node.index, self.dist)
+            node.ci = self.compute_ci_node_v2(node.index, self.dist)
             index+=1
         if DEBUG:
             print("CI PARA LISTA REQUERIDA CALCULADO")
@@ -107,62 +108,66 @@ class Graph:
             input()
         return ci
 
-    def compute_ci_node(self, start_node, dist):
-        ci = 0
-        visited = [0] * self.V
-        visited[start_node] = 1
-        deg = 0
-        counters = [0] * (dist+2+1)
-        edges = [0] * (dist+2+1)
-        edges[0] = self.graph[start_node].degree
-        counters[0] = self.graph[start_node].degree
-        queue = [start_node]
-        bubble = []
-        border = []
-        count_nodes = [0] * (dist+1+1)
-        while len(queue) != 0:
-            node = queue.pop(0)
-            for adj_node in self.graph[node].neighbors:
-                idx_adj_node = adj_node.index
-                # print("adj_node: ", adj_node)
-                counters[deg] -= 1
-                # if not visited
-                if visited[idx_adj_node] == 0:
-                    # mark as visited, and add to queue
-                    count_nodes[deg] += 1
-                    visited[idx_adj_node] = 1
-                    queue.append(idx_adj_node)
-                    # borders[deg].append(adj_node)
-                    if deg == (dist+1):
-                        border.append(adj_node)
-                    else:
-                        bubble.append(adj_node)
-                    counters[deg+1] += self.graph[idx_adj_node].degree
-                    edges[deg+1] += self.graph[idx_adj_node].degree
-            if counters[deg] == 0:
-                deg += 1
-                if deg == (dist+1):
-                    ci = (edges[0]-1)*(edges[deg] - count_nodes[deg-1])
-                    # print("edges: ", edges)
-                    # print("borders: ", borders)
-                    # print("count_nodes: ", count_nodes)
-                if deg == (dist+2):
-                    self.graph[start_node].border = border
-                    self.graph[start_node].bubble = bubble
-                    return ci
-        return ci
+    # def compute_ci_node(self, start_node, dist):
+    #     ci = 0
+    #     visited = [0] * self.V
+    #     visited[start_node] = 1
+    #     deg = 0
+    #     counters = [0] * (dist+2+1)
+    #     edges = [0] * (dist+2+1)
+    #     edges[0] = self.graph[start_node].degree
+    #     counters[0] = self.graph[start_node].degree
+    #     queue = [start_node]
+    #     bubble = []
+    #     border = []
+    #     count_nodes = [0] * (dist+1+1)
+    #     while len(queue) != 0:
+    #         node = queue.pop(0)
+    #         for adj_node in self.graph[node].neighbors:
+    #             idx_adj_node = adj_node.index
+    #             # print("adj_node: ", adj_node)
+    #             counters[deg] -= 1
+    #             # if not visited
+    #             if visited[idx_adj_node] == 0:
+    #                 # mark as visited, and add to queue
+    #                 count_nodes[deg] += 1
+    #                 visited[idx_adj_node] = 1
+    #                 queue.append(idx_adj_node)
+    #                 # borders[deg].append(adj_node)
+    #                 if deg == (dist+1):
+    #                     border.append(adj_node)
+    #                 else:
+    #                     bubble.append(adj_node)
+    #                 counters[deg+1] += self.graph[idx_adj_node].degree
+    #                 edges[deg+1] += self.graph[idx_adj_node].degree
+    #         if counters[deg] == 0:
+    #             deg += 1
+    #             if deg == (dist+1):
+    #                 ci = (edges[0]-1)*(edges[deg] - count_nodes[deg-1])
+    #                 # print("edges: ", edges)
+    #                 # print("borders: ", borders)
+    #                 # print("count_nodes: ", count_nodes)
+    #             if deg == (dist+2):
+    #                 self.graph[start_node].border = border
+    #                 self.graph[start_node].bubble = bubble
+    #                 return ci
+    #     return ci
 
     def update_ci_values(self, center_node):
         decrease_amnt = center_node.degree - 1
-        if TYPE:
-            for node in center_node.border:
-                node.ci -=  decrease_amnt
-            flat_list = center_node.bubble
-        else:
-            for node in center_node.e_border:
-                node.ci -= decrease_amnt
-            flat_list = [item for sublist in center_node.bola for item in sublist]
-            index_list = [node.index for node in flat_list]
+        # if TYPE:
+        #     for node in center_node.border:
+        #         node.ci -=  decrease_amnt
+        #     flat_list = center_node.bubble
+        # else:
+            # for node in center_node.e_border:
+            #     node.ci -= decrease_amnt
+            # flat_list = [item for sublist in center_node.bola for item in sublist]
+            # index_list = [node.index for node in flat_list]
+        for node in center_node.e_border:
+            node.ci -= decrease_amnt
+        flat_list = [item for sublist in center_node.bola for item in sublist]
+        index_list = [node.index for node in flat_list]
         if DEBUG:
             print("CENTER NODE: {}".format(center_node.index))
             print("BOLA PRECISA SER RECALCULADA")
@@ -210,9 +215,32 @@ class Graph:
         v.add_neighbor(u)
 
     def kshell(self):
-
-        pass
-
+        _res = list()
+        found = True
+        i = 0
+        while(found):
+            j = 0
+            _res.append([])
+            for node in self.graph:
+                if DEBUG:
+                    print("Current node: {}".format(node.index))
+                    print("Neighbors:")
+                    for adj in node.neighbors:
+                        print(adj.index)
+                if node.degree==1 and node.is_active:
+                    if DEBUG:
+                        print("Found node: {}".format(node.index))
+                    _res[i].append(node.index)
+                    self.kill(node)
+                    j+=1
+            if j == 0:
+                found = False
+            else:
+                i+=1
+        return _res
+    def kill(self,node):
+        node.kill()
+        self.graph.remove(node)
     def run(self):
         self.compute_ci(self.graph)
         self.create_max_heap()
@@ -288,13 +316,15 @@ if __name__ == "__main__":
     # g.addEdge(4,7)
 
     # print(g.V)
+    # res = g.kshell()
+    # print(res)
     # g.run()
-    # # _graph = sorted(g.graph, key=lambda x:-x.ci)
-    # # for node in _graph:
-    # #     print(node)
+    # _graph = sorted(g.graph, key=lambda x:-x.ci)
+    # for node in _graph:
+    #     print(node)
     # res = g.export()
     # for node in res:
-    #     print(node)
+        # print(node)
     # export_net(res,"teste","teste.csv",first=True)
 
     # print("GRAFO2 EXEMPLO 3-CORE")
@@ -327,9 +357,9 @@ if __name__ == "__main__":
     g.run()
     if(VERBOSE):
         print("Running time is {}".format(time()-t0))
-    res = g.export()
-    print(res[:1000])
-
+    # res = g.export()
+    # for node in res[:1000]:
+    #     print(node)
             # save full file as pickle
             # with open('{}.p'.format(network_name), 'wb') as f:
             #     pickle.dump(res, f)

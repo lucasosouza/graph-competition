@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 def import_net(file_name):
     """ Import CSV file in the competition format
@@ -26,8 +27,11 @@ def import_net(file_name):
 def export_net(results, network_name, file_out, first=True):
     """ Export to format required by competition 
         Required: optimize/clean last if, redundancy """
-
+    path = "./Results"
     if first:
+        if not os.path.exists(path):
+            print("Had to create path: {}".format(path))
+            os.mkdir(path)
         f = open("./Results/" + file_out, 'w')
 
         # write headers
