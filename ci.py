@@ -95,7 +95,7 @@ class Graph:
                 soma = (sum(node.degree for node in bola[indice]) - len(bola[indice]))
                 break
             indice-=1
-        ci = (self.graph[start_node].degree - 1)*soma
+        ci = (self.graph[start_node].degree - 1.0)*soma
         self.graph[start_node].bola = bola
         self.graph[start_node].e_border = e_border
         if DEBUG:
@@ -209,6 +209,10 @@ class Graph:
         u.add_neighbor(v)
         v.add_neighbor(u)
 
+    def kshell(self):
+
+        pass
+
     def run(self):
         self.compute_ci(self.graph)
         self.create_max_heap()
@@ -307,26 +311,28 @@ if __name__ == "__main__":
     # network_name = 'real5'
 
     # define file in and file out
-    network_type = ['model', 'real']
-    for type in network_type:
-        for i in range(0,4):
-            network_name = "{}{}".format(type,i+1)
-            file_out = "./Results/ci_{}_{}.csv".format(network_name,_dist)
-	        # load graph
-            if(VERBOSE):
-                print("Rodando {}".format(network_name))
-                print("Saida em {}".format(file_out))
-            g = Graph(filename=network_name, dist=_dist)
-            t0 = time()
-            # run
-            g.run()
-            if(VERBOSE):
-                print("Running time is {}".format(time()-t0))
-            res = g.export()
+    # network_type = ['model', 'real']
+    # for type in network_type:
+        # for i in range(0,4):
+            # network_name = "{}{}".format(type,i+1)
+    network_name = "model1"
+    file_out = "./Results/ci_{}_{}.csv".format(network_name,_dist)
+    # load graph
+    if(VERBOSE):
+        print("Rodando {}".format(network_name))
+        print("Saida em {}".format(file_out))
+    g = Graph(filename=network_name, dist=_dist)
+    t0 = time()
+    # run
+    g.run()
+    if(VERBOSE):
+        print("Running time is {}".format(time()-t0))
+    res = g.export()
+    print(res[:1000])
 
             # save full file as pickle
             # with open('{}.p'.format(network_name), 'wb') as f:
             #     pickle.dump(res, f)
 
             # export in contest format
-            export_net(res, network_name, file_out, first=True)
+            # export_net(res, network_name, file_out, first=True)
