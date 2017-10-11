@@ -1,5 +1,7 @@
 import numpy as np
 import sys
+import math
+from pprint import pprint
 from time import time
 from utils import export_net
 
@@ -28,6 +30,116 @@ class Graph:
         for i in range(self.V):
             self.graph.append(Node(i))
 
+    def Enhanced_Collective_Influence(self, d=2):
+    #强化的Collective Influence, 参数d为考虑的范围radius。
+        Enhanced_Collective_Influence_Dic = {}
+        ECI = 0
+
+        node_set = self.graph
+        #对于网路中每个节点。
+        for nid in node_set:
+            neighbor_hop_1 = nid.neighbors
+            neighbor_hop_2 = []
+            for ngb1 in neighbor_hop_1:
+                neighbor_hop_2 = list(set(neighbor_hop_2).union(ngb1.neighbors))
+            #end for
+            neighbor_hop_2 = list(  set(neighbor_hop_2).difference( set(neighbor_hop_1).union(set([nid]))  ) )
+
+            #(1)计算Collective_Influence取值
+            Total_Reduced_Degree = 0.0
+            for id in neighbor_hop_2:
+                Total_Reduced_Degree = Total_Reduced_Degree + (id.degree-1.0)
+            #end
+            Collective_Influence = (nid.degree-1.0) * Total_Reduced_Degree
+
+            #(2)对nid的Collective_Influence进行关于neighbors的Correlation_Intensity强化
+
+            Correlation_Intensity = 0.0
+
+            for id1 in neighbor_hop_2: #Center_set：离中心源点不同层的节点集合
+                for id2 in neighbor_hop_2:
+                    if id1.index != id2.index:
+                        Correlation_Intensity = Correlation_Intensity + float(len(set(id1.neighbors).intersection(set(id2.neighbors)))) / float(len(set(id1.neighbors).union(set(id2.neighbors))))
+            #end for
+
+            Correlation_Intensity_1 = 0.0
+            for id1 in neighbor_hop_1: #Center_set：离中心源点不同层的节点集合
+                for id2 in neighbor_hop_1:
+                    if id1.index != id2.index:
+                        Correlation_Intensity_1 = Correlation_Intensity_1 + float(len(set(id1.neighbors).intersection( set(id2.neighbors).difference(set([nid]))  ))) / float(len(set(id1.neighbors).union(  set(id2.neighbors).difference(set([nid]))   )))
+            #end for
+            Correlation_Intensity = 0.5*Correlation_Intensity + Correlation_Intensity_1
+
+            '''
+            #SubG_1 = G.subgraph(neighbor_hop_1).copy() #子图
+            SubG_2 = G.subgraph(neighbor_hop_2).copy() #子图
+            #SubEdge_1 = SubG_1.number_of_edges()
+            SubEdge_2 = SubG_2.number_of_edges()
+            #SubDegree_1 = sum(G.degree(v) for v in SubG_1.nodes())
+            SubDegree_2 = sum(G.degree(v) for v in SubG_2.nodes())
+            #Correlation_Intensity = 2*float(SubEdge_1)/(SubDegree_1+1) + float(SubEdge_2)/(SubDegree_2+1)
+            Correlation_Intensity = Correlation_Intensity + float(SubEdge_2)/(SubDegree_2+1)
+            '''
+
+
+            #(3)计算邻居结构的均衡性-structural entropy
+            #邻居节点的度概率-Degree proporational list
+            Degree_List = []
+            Total_Degree = 0
+            for node in nid.neighbors:
+                Degree_List.append(node.degree)
+                Total_Degree = Total_Degree + node.degree
+            #end for
+            for i in range(0,len(Degree_List)):
+                Degree_List[i] = Degree_List[i]/float(Total_Degree)
+            #end for
+            #计算正则化熵
+            Entropy = 0.0
+            for i in range(0, len(Degree_List)):
+                Entropy = Entropy + ( - Degree_List[i] * math.log( Degree_List[i] ) )
+            Entropy = Entropy / math.log( nid.degree + 0.1 )
+            #end for
+
+            #（4）计算Enhanced_Collective_Influence(ECI)
+            ECI = Collective_Influence * Entropy/(1+Correlation_Intensity)
+            Enhanced_Collective_Influence_Dic[nid.index] = ECI
+            if(VERBOSE):
+                print("{}/{}=>ECI:{}".format(nid.index,self.V,ECI))  
+
+        #end for
+
+        #print sorted(Enhanced_Collective_Influence_Dic.iteritems(), key=lambda d:d[1], reverse = True)
+        return Enhanced_Collective_Influence_Dic
+
+    def Collective_Influence(self, dist=2):
+        Collective_Influence_Dic = {}
+        for node in self.graph:
+            CI = 0
+            neighbor_set = []
+            neighbor_hop_1 = node.neighbors
+            neighbor_hop_2 = []
+            for nnode in neighbor_hop_1:
+                neighbor_hop_2  = list(set(neighbor_hop_2).union(set(nnode.neighbors)))
+                #print '2_hop:', nnid, G.neighbors(nnid)
+            #end for
+
+            center = [node]
+            neighbor_set = list(   set(neighbor_hop_2).difference(   set(neighbor_hop_1).union(set(center))  )    )
+            #print nid, neighbor_hop_1, neighbor_hop_2, neighbor_set
+
+            total_reduced_degree = 0
+            for nnnode in neighbor_set:
+                total_reduced_degree = total_reduced_degree + (nnnode.degree-1.0)
+            #end
+            CI = (node.degree-1.0) * total_reduced_degree
+            if(VERBOSE):
+                print("{}/{}=>CI:{}".format(node.index,self.V,CI))
+            Collective_Influence_Dic[node.index] = CI
+        #end for
+        #print "Collective_Influence_Dic:",sorted(Collective_Influence_Dic.iteritems(), key=lambda d:d[1], reverse = True)
+
+        return Collective_Influence_Dic
+
     def compute_ci(self, nodes):
         index = 0
         tot = len(nodes)
@@ -35,12 +147,13 @@ class Graph:
         for node in nodes:
             if VERBOSE:
                 if not index%mod:
-                    print("{}/{}".format(index,tot))
+                    print("CURRENT: {}/{}".format(index,tot))
             # if TYPE:
             #     node.ci = self.compute_ci_node(node.index, self.dist-1)
             # else:
             #     node.ci = self.compute_ci_node_v2(node.index, self.dist)
-            node.ci = self.compute_ci_node_v2(node.index, self.dist)
+            if node.is_active:
+                node.ci = self.compute_ci_node_v2(node.index, self.dist)
             index+=1
         if DEBUG:
             print("CI PARA LISTA REQUERIDA CALCULADO")
@@ -63,7 +176,7 @@ class Graph:
         e_border_idx = []
         while len(queue) != 0:
             node = queue.pop(0)
-            if DEBUG:
+            if DEBUG2:
                 print("node: {}, level: {}".format(node, level))
                 print(visited)
             if node is None:
@@ -93,10 +206,13 @@ class Graph:
         soma = 0
         for camada in reversed(bola):
             if len(camada)!=0:
-                soma = (sum(node.degree for node in bola[indice]) - len(bola[indice]))
+                for node in camada:
+                    soma += (node.degree-1.0)
+                # soma = (sum(node.degree for node in bola[indice]) - len(bola[indice]))
                 break
             indice-=1
-        ci = (self.graph[start_node].degree - 1.0)*soma
+        grau = self.graph[start_node].degree -1.0
+        ci = grau*soma
         self.graph[start_node].bola = bola
         self.graph[start_node].e_border = e_border
         if DEBUG:
@@ -164,13 +280,16 @@ class Graph:
             #     node.ci -= decrease_amnt
             # flat_list = [item for sublist in center_node.bola for item in sublist]
             # index_list = [node.index for node in flat_list]
+        if DEBUG:
+            print("RECALCULAR CI E_BORDER")
+            index_list = [node.index for node in center_node.e_border]
+            print(index_list)
         for node in center_node.e_border:
             node.ci -= decrease_amnt
         flat_list = [item for sublist in center_node.bola for item in sublist]
-        index_list = [node.index for node in flat_list]
         if DEBUG:
-            print("CENTER NODE: {}".format(center_node.index))
             print("BOLA PRECISA SER RECALCULADA")
+            index_list = [node.index for node in flat_list]
             print(index_list)
             input()
         self.compute_ci(flat_list)
@@ -183,11 +302,10 @@ class Graph:
     def remove_largest_value(self):
         node = self.heap.heap_extract_max()
         if isinstance(node, Node):        
-            node.kill()
+            self.kill(node)
         return node
 
     def import_net(self, filename):
-
         print(filename)
         mt = np.genfromtxt('networks/' + filename + '.csv',delimiter=',').astype(np.int32)
         
@@ -197,7 +315,7 @@ class Graph:
         self.create_graph()
 
         # create adjacency list
-        for row in mt[:1000]:
+        for row in mt:
             node1 = row[0]
             node2 = row[1]
             self.addEdge(self.graph[node1], self.graph[node2])
@@ -214,34 +332,68 @@ class Graph:
         u.add_neighbor(v)
         v.add_neighbor(u)
 
-    def kshell(self):
+    def kshell(self,current_degree):
         _res = list()
         found = True
         i = 0
+        to_kill = []
         while(found):
             j = 0
             _res.append([])
+            to_kill = []
             for node in self.graph:
                 if DEBUG:
                     print("Current node: {}".format(node.index))
                     print("Neighbors:")
                     for adj in node.neighbors:
                         print(adj.index)
-                if node.degree==1 and node.is_active:
+                if node.degree==current_degree and node.is_active:
                     if DEBUG:
                         print("Found node: {}".format(node.index))
                     _res[i].append(node.index)
-                    self.kill(node)
+                    to_kill.append(node)
                     j+=1
             if j == 0:
                 found = False
             else:
+                for node in to_kill:
+                    self.kill(node)
                 i+=1
         return _res
+    def full_kshell(self):
+        res = []
+        max_degree = max(node.degree for node in self.graph)
+        # print(res)
+        # res = self.kshell(1)
+        # print(res)
+        # res = self.kshell(2)
+        # print(res)
+        # res = self.kshell(3)
+        # print(res)
+        # res = self.kshell(2)
+        # print(res)
+        for i in range(1,int((max_degree/2))+1):
+            res.append(self.kshell(i))
+        for i in reversed(range(1,int((max_degree/2))+1)):
+            res.append(self.kshell(i))
+        res = [item for sublist in res for item in sublist]
+        res = [item for sublist in res for item in sublist]
+        # print (list(reversed(res)))
+        return list(reversed(res))
     def kill(self,node):
+        if DEBUG:
+            print("KILLED NODE: {}".format(node.index))
         node.kill()
-        self.graph.remove(node)
+
+    def run_eci(self):
+        res = self.Enhanced_Collective_Influence()
+        res = sorted(res.items(), key=lambda d:-d[1])
+        return res
     def run(self):
+        res = self.Collective_Influence()
+        res = sorted(res.items(), key=lambda d:-d[1])
+        return res
+    def run_ci(self):
         self.compute_ci(self.graph)
         self.create_max_heap()
         i = 0
@@ -280,15 +432,19 @@ class Graph:
         return to_export
 
 global DEBUG
+global DEBUG2
 global TYPE
 global VERBOSE
 if __name__ == "__main__":
     DEBUG = 0
+    DEBUG2 = 0
     TYPE = 0
     VERBOSE = 0
     for arg in sys.argv:
         if arg == "--debug":
             DEBUG = 1
+        if arg == "--debug2":
+            DEBUG = 2
         if arg == "--og":
             TYPE = 1
         if arg == "--verbose":
@@ -315,16 +471,17 @@ if __name__ == "__main__":
     # g.addEdge(3,4)
     # g.addEdge(4,7)
 
-    # print(g.V)
-    # res = g.kshell()
+    # print("TAMANHO DO GRAFO: {}".format(g.V))
+    # res = g.full_kshell()
     # print(res)
-    # g.run()
-    # _graph = sorted(g.graph, key=lambda x:-x.ci)
-    # for node in _graph:
-    #     print(node)
+    # res = g.run()
+    # print(res)
+    # res = g.run_eci()
+    # pprint(res)
+    # g.run_ci()
     # res = g.export()
     # for node in res:
-        # print(node)
+    #     print(node)
     # export_net(res,"teste","teste.csv",first=True)
 
     # print("GRAFO2 EXEMPLO 3-CORE")
@@ -345,18 +502,22 @@ if __name__ == "__main__":
     # for type in network_type:
         # for i in range(0,4):
             # network_name = "{}{}".format(type,i+1)
-    network_name = "model1"
-    file_out = "./Results/ci_{}_{}.csv".format(network_name,_dist)
+    network_name = "model3"
+    file_out = "eci_{}_{}.csv".format(network_name,_dist)
     # load graph
     if(VERBOSE):
         print("Rodando {}".format(network_name))
         print("Saida em {}".format(file_out))
     g = Graph(filename=network_name, dist=_dist)
-    t0 = time()
-    # run
-    g.run()
-    if(VERBOSE):
-        print("Running time is {}".format(time()-t0))
+    # t0 = time()
+    # # run
+    print("Calculando ECI")
+    # res = g.run()
+    res = g.run_eci()
+    print(res[:1000])
+    export_net(res,network_name,file_out,first=True)
+    # if(VERBOSE):
+    #     print("Running time is {}".format(time()-t0))
     # res = g.export()
     # for node in res[:1000]:
     #     print(node)

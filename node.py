@@ -1,6 +1,7 @@
 class Node:
     def __init__(self, index):
         self.index = index
+        self.label = index
         self.ci = -1
         self.bola_nodes = list()
         self.bola = list()

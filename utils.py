@@ -32,7 +32,7 @@ def export_net(results, network_name, file_out, first=True):
         if not os.path.exists(path):
             print("Had to create path: {}".format(path))
             os.mkdir(path)
-        f = open("./Results/" + file_out, 'w')
+        f = open(path + "/" + file_out, 'w')
 
         # write headers
         f.write('NetID,')
@@ -47,7 +47,7 @@ def export_net(results, network_name, file_out, first=True):
     # write each row
     counter = 1
     for tup in results:
-        node = tup.index
+        node = tup[0]
         if counter == 1:
             # add column header when counter is 1
             f.write(network_name + ',')
