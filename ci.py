@@ -495,7 +495,6 @@ if __name__ == "__main__":
     # g.addEdge(2,3)
     # g.addEdge(2,4)
     # g.addEdge(3,4)
-    # network_name = 'real5'
 
     # define file in and file out
     # network_type = ['model', 'real']
@@ -509,12 +508,10 @@ if __name__ == "__main__":
         print("Rodando {}".format(network_name))
         print("Saida em {}".format(file_out))
     g = Graph(filename=network_name, dist=_dist)
-    # t0 = time()
-    # # run
     print("Calculando ECI")
     # res = g.run()
     res = g.run_eci()
-    print(res[:1000])
+    pprint(res[:1000])
     export_net(res,network_name,file_out,first=True)
     # if(VERBOSE):
     #     print("Running time is {}".format(time()-t0))
